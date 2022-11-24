@@ -61,7 +61,7 @@ def parse_contents(contents, filename, date):
             array_options.append(x.split('-')[0])
 
     return html.Div([
-
+        html.P(' '),
         html.Div([html.P("Choose analysis of interest:"),
                   html.Div(html.Div([
                       dcc.Dropdown(id='analysis', clearable=False, value=array_options[0],
