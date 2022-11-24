@@ -14,7 +14,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
                 suppress_callback_exceptions=True)
-
 server = app.server
 
 app.layout = html.Div([
@@ -34,7 +33,6 @@ app.layout = html.Div([
             'textAlign': 'center',
             'margin': 'auto',
             'margin-top': '25px'
-
         },
         # Allow multiple files to be uploaded
         multiple=True
@@ -63,21 +61,24 @@ def parse_contents(contents, filename, date):
             array_options.append(x.split('-')[0])
 
     return html.Div([
+
         html.Div([html.P("Choose analysis of interest:"),
                   html.Div(html.Div([
                       dcc.Dropdown(id='analysis', clearable=False, value=array_options[0],
-                                   options=[{'label': x, 'value': x} for x in array_options])
-                  ], className="eight columns"), className="row")], className="offset-by-two columns"),
+                                   options=[{'label': x, 'value': x} for x in array_options]),
+                      html.P(' '),
+                  ], className="eight columns"), className="row"),
+                  html.Div([
+                      html.P("Display the dispersion measurements values of the control: "),
+                      # dcc.RadioItems(
+                      #     id='radio_items',
+                      #     value=[],
+                      #     labelStyle={'display': 'inline-block'},
+                      # )
+                      dcc.Input(id='input', value='', type='text'),
+                  ], style={'display': 'flex', 'column-gap': '10px'})
+                  ], className="offset-by-two columns"),
 
-        html.Hr(),  # horizontal line
-        html.Hr(),
-        # html.H5(filename),
-
-        # dash_table.DataTable(
-        #     data=df.to_dict('records'),
-        #     columns=[{'name': i, 'id': i} for i in df.columns if 'Unnamed' not in i],
-        #     page_size=30
-        # ),
         dcc.Store(id='stored-data', data=df.to_dict('records'))
     ])
 
@@ -96,8 +97,9 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
 
 @app.callback(Output(component_id="output-div", component_property="children"),
               Input(component_id="analysis", component_property="value"),
+              Input(component_id="input", component_property="value"),
               State('stored-data', 'data'))
-def make_graph(analysis_chosen, data):
+def make_graph(analysis_chosen, data_input, data):
     data = pd.DataFrame(data)
     fig = go.Figure()
     array_of_analysis_chosen = []
@@ -107,19 +109,31 @@ def make_graph(analysis_chosen, data):
             array_of_analysis_chosen.append(x_columns)
             nr_of_controls = nr_of_controls + 1
 
-    nr_ds = 3
-    while nr_ds != (-4):
-        medie = data[array_of_analysis_chosen[1]].mean() + (nr_ds * data[array_of_analysis_chosen[1]].std())
-        if nr_ds == 3 or nr_ds == -3:
-            fig.add_hline(y=medie,  line_color="red",  # annotation_text=round(medie, 2),
-                          # annotation_position="top right",
-                          layer="below")
-            nr_ds = nr_ds - 1
-        else:
-            fig.add_hline(y=medie, line_color="lightgrey",  # annotation_text=round(medie, 2),
-                          # annotation_position="top right",
-                          layer="below")
-            nr_ds = nr_ds - 1
+    if data_input == '':
+        nr_ds = 3
+        while nr_ds != (-4):
+            medie = data[array_of_analysis_chosen[1]].mean() + (nr_ds * data[array_of_analysis_chosen[1]].std())
+            if nr_ds == 3 or nr_ds == -3:
+                fig.add_hline(y=medie, line_color="red", layer="below")
+                nr_ds = nr_ds - 1
+            else:
+                fig.add_hline(y=medie, line_color="lightgrey", layer="below")
+                nr_ds = nr_ds - 1
+    else:
+        nr_ds = 3
+        while nr_ds != (-4):
+            medie = data[array_of_analysis_chosen[1]].mean() + (nr_ds * data[array_of_analysis_chosen[1]].std())
+            medie_annotation = data[data_input].mean() + (nr_ds * data[data_input].std())
+            if nr_ds == 3 or nr_ds == -3:
+                fig.add_hline(y=medie, line_color="red", annotation_text=round(medie_annotation, 2),
+                              annotation_position="top right",
+                              layer="below")
+                nr_ds = nr_ds - 1
+            else:
+                fig.add_hline(y=medie, line_color="lightgrey", annotation_text=round(medie_annotation, 2),
+                              annotation_position="top right",
+                              layer="below")
+                nr_ds = nr_ds - 1
 
     nr_add_trace = 0
     while nr_add_trace < nr_of_controls:
