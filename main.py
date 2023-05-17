@@ -177,33 +177,37 @@ def make_graph(analysis_chosen, data_input, data):
         opacity=0.1,
         showlegend=False,
     ))
-    if data_input == '':
+
+    lines = []
+    annotations = []
+
+    nr_ds = 3
+    while nr_ds != (-4):
+        medie = data_analiza[array_of_analysis_chosen[1]].mean() + \
+                (nr_ds * data_analiza[array_of_analysis_chosen[1]].std())
+        line_color = "red" if nr_ds == 3 or nr_ds == -3 else "lightgrey"
+        fig.add_hline(y=medie, line_color=line_color, layer="below")
+        lines.append(fig.layout.shapes[-1])
+        nr_ds = nr_ds - 1
+
+    if data_input != '':
         nr_ds = 3
-        while nr_ds != (-4):
-            medie = data_analiza[array_of_analysis_chosen[1]].mean() + \
-                    (nr_ds * data_analiza[array_of_analysis_chosen[1]].std())
-            if nr_ds == 3 or nr_ds == -3:
-                fig.add_hline(y=medie, line_color="red", layer="below")
-                nr_ds = nr_ds - 1
-            else:
-                fig.add_hline(y=medie, line_color="lightgrey", layer="below")
-                nr_ds = nr_ds - 1
-    else:
-        nr_ds = 3
-        while nr_ds != (-4):
-            medie = data_analiza[array_of_analysis_chosen[1]].mean() + \
-                    (nr_ds * data_analiza[array_of_analysis_chosen[1]].std())
+        for line in lines:
             medie_annotation = data_analiza[data_input].mean() + (nr_ds * data_analiza[data_input].std())
-            if nr_ds == 3 or nr_ds == -3:
-                fig.add_hline(y=medie, line_color="red", annotation_text=round(medie_annotation, 2),
-                              annotation_position="top right",
-                              layer="below")
-                nr_ds = nr_ds - 1
-            else:
-                fig.add_hline(y=medie, line_color="lightgrey", annotation_text=round(medie_annotation, 2),
-                              annotation_position="top right",
-                              layer="below")
-                nr_ds = nr_ds - 1
+            annotations.append(
+                dict(
+                    x=1,
+                    y=line['y0'],
+                    xref="paper",
+                    yref="y",
+                    text=str(round(medie_annotation, 2)),
+                    showarrow=False,
+                    align="right",
+                )
+            )
+            nr_ds = nr_ds - 1
+
+    fig.update_layout(annotations=annotations)
 
     nr_add_trace = 0
     while nr_add_trace < nr_of_controls:
@@ -228,6 +232,28 @@ def make_graph(analysis_chosen, data_input, data):
     fig.update_traces(mode="markers+lines")
     fig.update_yaxes(showgrid=False, zeroline=False)
     fig.update_xaxes(showgrid=False, zeroline=False, categoryorder='category ascending')
+
+    def callback(traceOnClick, points, selector):
+        # 'trace' is the clicked trace
+        # 'points' is a dictionary containing information about the clicked data points
+        # 'selector' is an object that provides information about the user's selection
+
+        # Check if the 'background' trace was clicked
+        if traceOnClick.name == 'background':
+            # If so, remove all annotations
+            fig.update_layout(annotations=[])
+        else:
+            # Otherwise, add annotations for the clicked trace
+            fig.update_layout(annotations=[
+                go.layout.Annotation(
+                    # Add the annotations as you want
+                    ...
+                )
+            ])
+
+    # Attach the callback function to the 'click' event of all traces
+    for trace in fig.data:
+        trace.on_click(callback)
 
     return [
         html.Div([
