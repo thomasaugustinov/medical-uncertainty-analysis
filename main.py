@@ -166,18 +166,6 @@ def make_graph(analysis_chosen, data_input, data):
     medie_minus3ds = data_analiza[array_of_analysis_chosen[1]].mean() - (
                 3 * data_analiza[array_of_analysis_chosen[1]].std())
 
-    fig.add_trace(go.Scatter(
-        x=[data_analiza.iat[0, 0], data_analiza.iat[len(data_analiza) - 1, 0],
-           data_analiza.iat[len(data_analiza) - 1, 0],
-           data_analiza.iat[0, 0], data_analiza.iat[0, 0]],
-        y=[medie_minus3ds, medie_minus3ds, medie_plus3ds, medie_plus3ds, medie_minus3ds],
-        fill='toself',
-        mode='none',
-        name='background',
-        opacity=0.1,
-        showlegend=False,
-    ))
-
     lines = []
     annotations = []
 
@@ -233,28 +221,6 @@ def make_graph(analysis_chosen, data_input, data):
     fig.update_yaxes(showgrid=False, zeroline=False)
     fig.update_xaxes(showgrid=False, zeroline=False, categoryorder='category ascending')
 
-    def callback(traceOnClick, points, selector):
-        # 'trace' is the clicked trace
-        # 'points' is a dictionary containing information about the clicked data points
-        # 'selector' is an object that provides information about the user's selection
-
-        # Check if the 'background' trace was clicked
-        if traceOnClick.name == 'background':
-            # If so, remove all annotations
-            fig.update_layout(annotations=[])
-        else:
-            # Otherwise, add annotations for the clicked trace
-            fig.update_layout(annotations=[
-                go.layout.Annotation(
-                    # Add the annotations as you want
-                    ...
-                )
-            ])
-
-    # Attach the callback function to the 'click' event of all traces
-    for trace in fig.data:
-        trace.on_click(callback)
-
     return [
         html.Div([
             html.Div([
@@ -262,6 +228,7 @@ def make_graph(analysis_chosen, data_input, data):
             ], className="row"),
         ])
     ]
+
 
 if __name__ == '__main__':
     app.run_server(debug=False)
