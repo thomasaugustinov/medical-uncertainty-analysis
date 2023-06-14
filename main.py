@@ -103,7 +103,6 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
             zip(list_of_contents, list_of_names, list_of_dates)]
         return children
 
-
 @app.callback(Output(component_id="output-div", component_property="children"),
               Input(component_id="analysis", component_property="value"),
               Input(component_id="input", component_property="value"),
@@ -221,10 +220,125 @@ def make_graph(analysis_chosen, data_input, data):
     fig.update_yaxes(showgrid=False, zeroline=False)
     fig.update_xaxes(showgrid=False, zeroline=False, categoryorder='category ascending')
 
+    warnings = []
+
+    for date in data_analiza[data.columns[0]]:
+        # Get the data for the current date
+        data_for_date = data_analiza[data_analiza['Data'] == date]
+
+        for i in range(len(array_of_analysis_chosen)):
+            for j in range(i + 1, len(array_of_analysis_chosen)):
+                column1 = array_of_analysis_chosen[i]
+                column2 = array_of_analysis_chosen[j]
+
+                data1 = data_analiza[array_of_analysis_chosen[1]].mean() + \
+                        (data_for_date[column1] - data_analiza[column1].mean()) * data_analiza[array_of_analysis_chosen[1]].std() \
+                        / data_analiza[column1].std()
+
+                data2 = data_analiza[array_of_analysis_chosen[1]].mean() + \
+                        (data_for_date[column2] - data_analiza[column2].mean()) * data_analiza[array_of_analysis_chosen[1]].std() \
+                        / data_analiza[column2].std()
+
+                diff = abs(data1 - data2)
+
+                over_4sd = diff > 4 * data_analiza[array_of_analysis_chosen[1]].std()
+
+                if any(over_4sd):
+                    warnings.append(('Red',
+                                     f'Warning: The difference between controls {column1} and {column2} is over 4 Standard Deviations on {date}.'))
+
+        over_2sd_counts = 0
+        under_2sd_counts = 0
+        for column in array_of_analysis_chosen:
+            control_data = data_for_date[column]
+            over_2sd = control_data > data_analiza[column].mean() + 2 * data_analiza[column].std()
+            under_2sd = control_data < data_analiza[column].mean() - 2 * data_analiza[column].std()
+            if any(over_2sd):
+                over_2sd_counts += 1
+            if any(under_2sd):
+                under_2sd_counts += 1
+        if over_2sd_counts >= 2 or under_2sd_counts >= 2:
+            warnings.append(('Red', f'Warning: 2 controls are over 2 Standard Deviations on {date}.'))
+
+    for column in array_of_analysis_chosen:
+        medie_analysisPlus3DS = data_analiza[column].mean() + (3 * data_analiza[column].std())
+        medie_analysisMinus3DS = data_analiza[column].mean() - (3 * data_analiza[column].std())
+        control_data = data_analiza[column]
+
+        if any(control_data > medie_analysisPlus3DS):
+            warnings.append(('Red', f'Warning: {column} has a control above 3 Standard Deviations.'))
+
+        if any(control_data < medie_analysisMinus3DS):
+            warnings.append(('Red', f'Warning: {column} has a control under 3 Standard Deviations.'))
+
+        over_2sd = control_data > data_analiza[column].mean() + 2 * data_analiza[column].std()
+        under_2sd = control_data < data_analiza[column].mean() - 2 * data_analiza[column].std()
+        if any(over_2sd[:-1].reset_index(drop=True) & over_2sd[1:].reset_index(drop=True)) or \
+                any(under_2sd[:-1].reset_index(drop=True) & under_2sd[1:].reset_index(drop=True)):
+            warnings.append(('Red', f'Warning: {column} has 2 consecutive measurements over 2 Standard Deviations.'))
+
+        over_1sd = control_data > data_analiza[column].mean() + data_analiza[column].std()
+        under_1sd = control_data < data_analiza[column].mean() - data_analiza[column].std()
+        if any(over_1sd[:-3].reset_index(drop=True) & over_1sd[1:-2].reset_index(drop=True) & over_1sd[2:-1].reset_index
+                (drop=True) & over_1sd[3:].reset_index(drop=True)) or \
+                any(under_1sd[:-3].reset_index(drop=True) & under_1sd[1:-2].reset_index(drop=True)
+                    & under_1sd[2:-1].reset_index(drop=True) & under_1sd[3:].reset_index(drop=True)):
+            warnings.append(('Yellow',
+                             f'Warning: {column} has 4 consecutive measurements on the same side of the mean above or under 1 Standard Deviation.'))
+
+        over_mean = control_data > data_analiza[column].mean()
+        under_mean = control_data < data_analiza[column].mean()
+        if any((over_mean[:-9].reset_index(drop=True)) & (over_mean[1:-8].reset_index(drop=True)) & (
+            over_mean[2:-7].reset_index(drop=True)) & (over_mean[3:-6].reset_index(drop=True)) & (
+               over_mean[4:-5].reset_index(drop=True)) & (over_mean[5:-4].reset_index(drop=True))
+               & (over_mean[6:-3].reset_index(drop=True)) & (over_mean[7:-2].reset_index(drop=True)) & (
+               over_mean[8:-1].reset_index(drop=True)) & (over_mean[9:].reset_index(drop=True))) or \
+                any((under_mean[:-9].reset_index(drop=True)) & (under_mean[1:-8].reset_index(drop=True)) & (
+                under_mean[2:-7].reset_index(drop=True)) & (under_mean[3:-6].reset_index(drop=True)) & (
+                    under_mean[4:-5].reset_index(drop=True))
+                    & (under_mean[5:-4].reset_index(drop=True)) & (under_mean[6:-3].reset_index(drop=True)) & (
+                    under_mean[7:-2].reset_index(drop=True)) & (under_mean[8:-1].reset_index(drop=True)) & (
+                    under_mean[9:].reset_index(drop=True))):
+            warnings.append(
+                ('Yellow', f'Warning: {column} has 10 consecutive measurements on the same side of the mean.'))
+
+        diff = control_data.diff()
+        if any((diff[:-5].reset_index(drop=True) > 0) & (diff[1:-4].reset_index(drop=True) > 0) &
+               (diff[2:-3].reset_index(drop=True) > 0) & (diff[3:-2].reset_index(drop=True) > 0) &
+               (diff[4:-1].reset_index(drop=True) > 0) & (diff[5:].reset_index(drop=True) > 0)) or \
+                any((diff[:-5].reset_index(drop=True) < 0) & (diff[1:-4].reset_index(drop=True) < 0) &
+                    (diff[2:-3].reset_index(drop=True) < 0) & (diff[3:-2].reset_index(drop=True) < 0) &
+                    (diff[4:-1].reset_index(drop=True) < 0) & (diff[5:].reset_index(drop=True) < 0)):
+            warnings.append(('Yellow', f'Warning: {column} has 7 consecutive measurements that increase or decrease.'))
+
+    warning_divs = []
+    for color, message in warnings:
+        bg_color = []
+        if color == 'Red':
+            bg_color = 'rgba(255, 0, 0, 0.1)'  # Light red
+        elif color == 'Yellow':
+            bg_color = 'rgba(255, 165, 0, 0.1)'  # Light yellow
+        if color == 'Yellow':
+            color = 'rgba(255, 165, 0)'
+        warning_divs.append(html.Div(
+            message, style={
+                'border': f'1px solid {color}',
+                'borderRadius': '5px',
+                'padding': '10px',
+                'textAlign': 'center',
+                'color': color,
+                'backgroundColor': bg_color,
+                'width': '65%',  # Set the width to 80% of the parent div
+                'margin': 'auto',  # Center the div
+                'margin-bottom': '10px'
+            })
+        )
     return [
         html.Div([
             html.Div([
                 html.Div([dcc.Graph(id='basic-interactions', figure=fig)], id='graph-div', className="twelve columns"),
+                html.Div(warning_divs, className="twelve columns",
+                             style={'justifyContent': 'center', 'alignItems': 'center'}),
             ], className="row"),
         ])
     ]
