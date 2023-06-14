@@ -59,9 +59,8 @@ def parse_contents(contents, filename, date):
     try:
         df = pd.read_excel(io.BytesIO(decoded))
     except Exception as e:
-        print(e)
         return html.Div([
-            'There was an error processing this file.'
+            f'There was an error processing this file. {e}'
         ])
 
     array_options = []
@@ -124,7 +123,6 @@ def make_graph(analysis_chosen, data_input, data):
                 nr_analize_fara_null = nr_analize_fara_null + 1
             index_verificare_null = index_verificare_null + 1
         data_analiza = pd.DataFrame(data_analiza)
-        print(data_analiza)
     else:
         for x in data[array_of_analysis_chosen[0]]:
             if pd.isnull(x) == 0:
@@ -136,7 +134,6 @@ def make_graph(analysis_chosen, data_input, data):
                 nr_analize_fara_null = nr_analize_fara_null + 1
             index_verificare_null = index_verificare_null + 1
         data_analiza = pd.DataFrame(data_analiza)
-        print(data_analiza)
 
     data_inverted = []
     for x in data_analiza[data_analiza.columns[0]]:
@@ -144,9 +141,7 @@ def make_graph(analysis_chosen, data_input, data):
         data_inverted.append(data_x_inverted)
 
     data_analiza[data_analiza.columns[0]] = data_inverted
-    print(data_inverted)
     data_analiza = data_analiza.sort_values(data.columns[0])
-    print(data_analiza)
 
     medie_plus3ds = data_analiza[array_of_analysis_chosen[1]].mean() + (
                 3 * data_analiza[array_of_analysis_chosen[1]].std())
