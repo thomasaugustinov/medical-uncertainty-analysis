@@ -10,11 +10,18 @@ import plotly.graph_objects as go
 
 import pandas as pd
 
+import dash_auth
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
                 suppress_callback_exceptions=True)
 server = app.server
+
+auth = dash_auth.BasicAuth(
+    app,
+    {'arnlab': '7271'}
+)
 
 styles = {
     'pre': {
