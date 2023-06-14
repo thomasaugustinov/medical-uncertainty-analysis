@@ -1,7 +1,3 @@
-import json
-from textwrap import dedent as d
-import datetime
-
 import base64
 import io
 
@@ -85,7 +81,7 @@ def parse_contents(contents, filename, date):
                   html.Div([
                       html.P("Display the dispersion measurements values of the control: "),
                       dcc.Input(id='input', value='', type='text'),
-                  ], style={'display': 'flex', 'column-gap': '10px'})
+                  ], style={'display': 'flex', 'column-gap': '10px', 'margin-bottom': '10px'})
                   ], className="offset-by-two columns"),
 
         dcc.Store(id='stored-data', data=df.to_dict('records'))
@@ -345,4 +341,4 @@ def make_graph(analysis_chosen, data_input, data):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
