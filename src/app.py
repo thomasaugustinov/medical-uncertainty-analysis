@@ -110,6 +110,15 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
             zip(list_of_contents, list_of_names, list_of_dates)]
         return children
 
+
+def invert_dates(data_analiza):
+    data_inverted = []
+    for x in data_analiza[data_analiza.columns[0]]:
+        data_x_inverted = x.split('.')[2] + '.' + x.split('.')[1] + '.' + x.split('.')[0]
+        data_inverted.append(data_x_inverted)
+    return data_inverted
+
+
 @app.callback(Output(component_id="output-div", component_property="children"),
               Input(component_id="analysis", component_property="value"),
               Input(component_id="input", component_property="value"),
@@ -147,13 +156,13 @@ def make_graph(analysis_chosen, data_input, data):
             index_verificare_null = index_verificare_null + 1
         data_analiza = pd.DataFrame(data_analiza)
 
-    data_inverted = []
-    for x in data_analiza[data_analiza.columns[0]]:
-        data_x_inverted = x.split('.')[2] + '.' + x.split('.')[1] + '.' + x.split('.')[0]
-        data_inverted.append(data_x_inverted)
+    data_inverted = invert_dates(data_analiza)
 
     data_analiza[data_analiza.columns[0]] = data_inverted
     data_analiza = data_analiza.sort_values(data.columns[0])
+
+    data_inverted = invert_dates(data_analiza)
+    data_analiza[data_analiza.columns[0]] = data_inverted
 
     medie_plus3ds = data_analiza[array_of_analysis_chosen[1]].mean() + (
                 3 * data_analiza[array_of_analysis_chosen[1]].std())
