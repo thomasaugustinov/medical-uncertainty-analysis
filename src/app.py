@@ -72,9 +72,14 @@ def parse_contents(contents, filename, date):
 
     array_options = []
     for x in df.columns.difference([df.columns[0]]):
-        if x.split('-')[0] not in array_options \
-                and x.split(':')[0] != "Unnamed":
-            array_options.append(x.split('-')[0])
+        parts = x.split('-', 2)
+        if len(parts) > 2:
+            key = '-'.join(parts[:2])
+        else:
+            key = parts[0]
+
+        if key not in array_options and key.split(':')[0] != "Unnamed":
+            array_options.append(key)
 
     return html.Div([
         html.P(' '),
