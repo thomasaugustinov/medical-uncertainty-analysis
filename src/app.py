@@ -115,7 +115,7 @@ def make_graph(analysis_chosen, data_input, data):
     array_of_analysis_chosen = []
     nr_of_controls = 0
     for x_columns in data.columns.difference([data.columns[0]]):
-        if analysis_chosen in x_columns:
+        if analysis_chosen + '-' in x_columns:
             array_of_analysis_chosen.append(x_columns)
             nr_of_controls = nr_of_controls + 1
     data_analiza = []
