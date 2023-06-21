@@ -201,7 +201,8 @@ def make_graph(analysis_chosen, data_input, data):
                     yref="y",
                     text=str(round(medie_annotation, 2)),
                     showarrow=False,
-                    align="right",
+                    xanchor="right",
+                    yanchor="bottom",
                 )
             )
             nr_ds = nr_ds - 1
