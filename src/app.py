@@ -20,7 +20,7 @@ server = app.server
 
 auth = dash_auth.BasicAuth(
     app,
-    {'arnlab': '7271'}
+    {'arnlab': '1234'}
 )
 
 styles = {
@@ -129,7 +129,7 @@ def make_graph(analysis_chosen, data_input, data):
     array_of_analysis_chosen = []
     nr_of_controls = 0
     for x_columns in data.columns.difference([data.columns[0]]):
-        if analysis_chosen + '-' in x_columns:
+        if x_columns.startswith(analysis_chosen + '-'):
             array_of_analysis_chosen.append(x_columns)
             nr_of_controls = nr_of_controls + 1
     data_analiza = []
