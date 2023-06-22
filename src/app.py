@@ -86,7 +86,8 @@ def update_sheet_selector(list_of_contents, list_of_names, list_of_dates):
             dcc.Dropdown(
                 id='sheet-selector',
                 options=[{'label': name, 'value': name} for name in sheet_names],
-                value=sheet_names[0]
+                value=None,
+                placeholder="Select a sheet"
             )
         ], style={
             'width': '96%',
