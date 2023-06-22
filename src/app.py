@@ -11,6 +11,8 @@ import plotly.graph_objects as go
 import pandas as pd
 
 import dash_auth
+from datetime import datetime
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -145,12 +147,15 @@ def update_output(selected_sheet, list_of_contents, list_of_names, list_of_dates
         return children
 
 
-def invert_dates(data_analiza):
-    data_inverted = []
-    for x in data_analiza[data_analiza.columns[0]]:
-        data_x_inverted = x.split('.')[2] + '.' + x.split('.')[1] + '.' + x.split('.')[0]
-        data_inverted.append(data_x_inverted)
-    return data_inverted
+def convert_to_datetime(european_date_str):
+    return datetime.strptime(european_date_str, '%d.%m.%Y')
+
+
+def sort_by_dates(data_analiza):
+    data_analiza['datetime'] = data_analiza[data_analiza.columns[0]].apply(convert_to_datetime)
+    data_analiza = data_analiza.sort_values(by='datetime')
+    data_analiza = data_analiza.drop(columns=['datetime'])
+    return data_analiza
 
 
 @app.callback(Output(component_id="output-div", component_property="children"),
@@ -190,13 +195,7 @@ def make_graph(analysis_chosen, data_input, data):
             index_verificare_null = index_verificare_null + 1
         data_analiza = pd.DataFrame(data_analiza)
 
-    data_inverted = invert_dates(data_analiza)
-
-    data_analiza[data_analiza.columns[0]] = data_inverted
-    data_analiza = data_analiza.sort_values(data.columns[0])
-
-    data_inverted = invert_dates(data_analiza)
-    data_analiza[data_analiza.columns[0]] = data_inverted
+    data_analiza = sort_by_dates(data_analiza)
 
     medie_plus3ds = data_analiza[array_of_analysis_chosen[1]].mean() + (
                 3 * data_analiza[array_of_analysis_chosen[1]].std())
@@ -265,7 +264,7 @@ def make_graph(analysis_chosen, data_input, data):
     fig.update_annotations()
     fig.update_traces(mode="markers+lines")
     fig.update_yaxes(showgrid=False, zeroline=False)
-    fig.update_xaxes(showgrid=False, zeroline=False, categoryorder='category ascending')
+    fig.update_xaxes(showgrid=False, zeroline=False)
 
     warnings = []
 
@@ -380,6 +379,9 @@ def make_graph(analysis_chosen, data_input, data):
                 'margin-bottom': '10px'
             })
         )
+
+    print(data_analiza)
+
     return [
         html.Div([
             html.Div([
