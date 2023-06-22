@@ -54,17 +54,53 @@ app.layout = html.Div([
         },
         multiple=True
     ),
+    html.Div(id='output-sheet-selector'),
     html.Div(id='output-datatable'),
     html.Div(id="output-div", children=[]),
 ])
 
 
-def parse_contents(contents, filename, date):
+def get_sheet_names(contents, filename, date):
     content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)
     try:
-        df = pd.read_excel(io.BytesIO(decoded))
+        xls = pd.ExcelFile(io.BytesIO(decoded))
+        sheet_names = xls.sheet_names
+        return sheet_names
+    except Exception as e:
+        return html.Div([
+            f'There was an error processing this file. {e}'
+        ])
+
+
+@app.callback(Output('output-sheet-selector', 'children'),
+              Input('upload-data', 'contents'),
+              State('upload-data', 'filename'),
+              State('upload-data', 'last_modified'))
+def update_sheet_selector(list_of_contents, list_of_names, list_of_dates):
+    if list_of_contents is not None:
+        sheet_names = get_sheet_names(list_of_contents[0], list_of_names[0], list_of_dates[0])
+        return html.Div([
+            html.Label("Select Sheet:"),
+            dcc.Dropdown(
+                id='sheet-selector',
+                options=[{'label': name, 'value': name} for name in sheet_names],
+                value=sheet_names[0]
+            )
+        ], style={
+            'width': '96%',
+            'margin': 'auto',
+            'margin-top': '10px'
+        })
+
+
+def parse_sheet_contents(sheet_name, contents, filename, date):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        df = pd.read_excel(io.BytesIO(decoded), sheet_name=sheet_name)
     except Exception as e:
         return html.Div([
             f'There was an error processing this file. {e}'
@@ -97,14 +133,14 @@ def parse_contents(contents, filename, date):
 
 
 @app.callback(Output('output-datatable', 'children'),
-              Input('upload-data', 'contents'),
+              Input('sheet-selector', 'value'),
+              State('upload-data', 'contents'),
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'))
-def update_output(list_of_contents, list_of_names, list_of_dates):
+def update_output(selected_sheet, list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)]
+            parse_sheet_contents(selected_sheet, c, n, d) for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)]
         return children
 
 
