@@ -72,11 +72,8 @@ def parse_contents(contents, filename, date):
 
     array_options = []
     for x in df.columns.difference([df.columns[0]]):
-        parts = x.split('-', 2)
-        if len(parts) > 2:
-            key = '-'.join(parts[:2])
-        else:
-            key = parts[0]
+        parts = x.split('-')
+        key = '-'.join(parts[:-1]) if len(parts) > 1 else parts[0]
 
         if key not in array_options and key.split(':')[0] != "Unnamed":
             array_options.append(key)
